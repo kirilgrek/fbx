@@ -4,6 +4,8 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import androidx.core.app.ActivityCompat;
@@ -12,6 +14,7 @@ import android.util.Log;
 
 import org.andresoviedo.util.event.EventListener;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.EventObject;
 import java.util.List;
@@ -66,4 +69,17 @@ public class AndroidUtils {
         i.setData(Uri.parse(url));
         activity.startActivity(i);
     }
+
+    public static Bitmap getBitmap(byte[] bytes){
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        // By default, Android applies pre-scaling to bitmaps depending on the resolution of your device and which
+        // resource folder you placed the image in. We don’t want Android to scale our bitmap at all, so to be sure,
+        // we set inScaled to false.
+        options.inScaled = false;
+        options.inMutable = true;
+
+        // Read in the resource
+        return BitmapFactory.decodeStream(new ByteArrayInputStream(bytes), null, options);
+    }
+
 }

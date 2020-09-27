@@ -21,6 +21,7 @@ import org.andresoviedo.android_3d_model_engine.services.collada.ColladaLoaderTa
 import org.andresoviedo.android_3d_model_engine.services.stl.STLLoaderTask;
 import org.andresoviedo.android_3d_model_engine.services.wavefront.WavefrontLoaderTask;
 import org.andresoviedo.android_3d_model_engine.view.ModelSurfaceView;
+import org.andresoviedo.util.android.AndroidUtils;
 import org.andresoviedo.util.android.ContentUtils;
 import org.andresoviedo.util.event.EventListener;
 import org.andresoviedo.util.io.IOUtils;
@@ -195,6 +196,9 @@ public class SceneLoader implements LoadListener, EventListener {
     private Map<Object3DData, Dimensions> originalDimensions = new HashMap<>();
     private Map<Object3DData, Transform> originalTransforms = new HashMap<>();
 
+    // event listeners
+    private final List<EventListener> listeners = new ArrayList<>();
+
     public SceneLoader(Activity main, URI uri, int type, GLSurfaceView glView) {
         this.parent = main;
         this.uri = uri;
@@ -266,6 +270,11 @@ public class SceneLoader implements LoadListener, EventListener {
                 Object3DData obj = objects.get(i);
                 animator.update(obj, isShowBindPose());
             }
+        }
+
+        if (!this.getObjects().isEmpty()) {
+            ON_DRAW_FRAME.setSource(this);
+            AndroidUtils.fireEvent(this.listeners, ON_DRAW_FRAME);
         }
     }
 
@@ -901,5 +910,27 @@ public class SceneLoader implements LoadListener, EventListener {
         }*/
     }
 
+    public void addListener(EventListener listener){
+        this.listeners.add(listener);
+    }
 
+    public static final OnDrawFrameEvent ON_DRAW_FRAME = new OnDrawFrameEvent(SceneLoader.class);
+    public static final OnDrawFrameEvent ON_DRAW_OBJECT = new OnDrawFrameEvent(SceneLoader.class);
+
+    public static class OnDrawFrameEvent extends EventObject {
+
+        /**
+         * Constructs a prototypical Event.
+         *
+         * @param source The object on which the Event initially occurred.
+         * @throws IllegalArgumentException if source is null.
+         */
+        public OnDrawFrameEvent(Object source) {
+            super(source);
+        }
+
+        public void setSource(Object source){
+            super.source = source;
+        }
+    }
 }

@@ -103,7 +103,8 @@ public class ModelActivity extends Activity implements EventListener {
         Log.i("ModelActivity", "Loading Scene...");
         scene = new SceneLoader(this, paramUri, paramType, gLView);
         if (paramUri == null) {
-            final LoaderTask task = new DemoLoaderTask(this, null, scene);
+            final DemoLoaderTask task = new DemoLoaderTask(this, null, scene);
+            scene.addListener(task);
             task.execute();
         }
 

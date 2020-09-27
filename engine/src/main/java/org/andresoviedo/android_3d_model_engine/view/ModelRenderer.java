@@ -1,6 +1,7 @@
 package org.andresoviedo.android_3d_model_engine.view;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
@@ -538,7 +539,9 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
 
                         // bind texture
                         Log.i("ModelRenderer", "Loading material texture for element... '" + element);
-                        textureId = GLUtil.loadTexture(element.getMaterial().getTextureData());
+                        Bitmap bitmap = AndroidUtils.getBitmap(element.getMaterial().getTextureData());
+                        textureId = GLUtil.loadTexture(bitmap);
+                        element.getMaterial().getTexture().setBitmap(bitmap);
                         element.getMaterial().setTextureId(textureId);
 
                         // cache texture
@@ -554,11 +557,11 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
                     textureId = textures.get(objData.getTextureData());
                     if (textureId == null && objData.getTextureData() != null) {
                         Log.i("ModelRenderer", "Loading texture for obj: '" + objData.getId() + "'... bytes: " + objData.getTextureData().length);
-                        ByteArrayInputStream textureIs = new ByteArrayInputStream(objData.getTextureData());
-                        textureId = GLUtil.loadTexture(textureIs);
-                        textureIs.close();
-                        textures.put(objData.getTextureData(), textureId);
+                        Bitmap bitmap = AndroidUtils.getBitmap(objData.getTextureData());
+                        textureId = GLUtil.loadTexture(bitmap);
+                        objData.getMaterial().getTexture().setBitmap(bitmap);
                         objData.getMaterial().setTextureId(textureId);
+                        textures.put(objData.getTextureData(), textureId);
 
                         Log.i("ModelRenderer", "Loaded texture OK. id: " + textureId);
                     }

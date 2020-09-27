@@ -17,13 +17,11 @@ public class Material {
     private float shininess;
     private float alpha = 1.0f;
 
-    // texture info
-    private String textureFile;
-    private byte[] textureData;
-
-    // // Loaded by ModelRenderer (GLThread)
-    private int textureId = -1;
+    // calculated renderer color
     private float[] color;
+
+    // texture
+    private Texture texture = new Texture(null);
 
     public Material() {
     }
@@ -83,27 +81,40 @@ public class Material {
     }
 
     public String getTextureFile() {
-        return textureFile;
+        return this.texture.getTextureFile();
     }
 
     public void setTextureFile(String textureFile) {
-        this.textureFile = textureFile;
+        this.texture.setTextureFile(textureFile);
     }
 
     public void setTextureData(byte[] data) {
-        this.textureData = data;
+        this.texture = new Texture(data);
     }
 
     public byte[] getTextureData() {
-        return this.textureData;
+        return this.texture.getTextureData();
     }
 
+    /**
+     * OpenGL texture id
+     * @return
+     */
     public int getTextureId() {
-        return textureId;
+        return this.texture.getTextureId();
     }
 
+    /**
+     * Inform the reserved OpenGL texture id
+     * @param textureId texture id
+     */
     public void setTextureId(int textureId) {
-        this.textureId = textureId;
+        this.texture.setTextureId(textureId);
+    }
+
+
+    public Texture getTexture() {
+        return this.texture;
     }
 
     public float[] getColor(){
@@ -132,9 +143,13 @@ public class Material {
                 ", specular=" + Arrays.toString(specular) +
                 ", shininess=" + shininess +
                 ", alpha=" + alpha +
-                ", textureFile='" + textureFile + '\'' +
-                ", textureData="+(textureData != null? textureData.length+" (bytes)":null)+
-                ", textureId=" + textureId +
+                ", textureFile='" + this.getTextureFile() + '\'' +
+                ", textureData="+(this.getTextureData() != null? getTextureData().length+" (bytes)":null)+
+                ", textureId=" + getTextureId() +
                 '}';
+    }
+
+    public void setTexture(Texture texture) {
+        this.texture = texture;
     }
 }

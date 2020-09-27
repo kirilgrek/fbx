@@ -62,7 +62,8 @@ public class RendererFactory {
 
         // double check features
         boolean isAnimated = usingAnimation && obj instanceof AnimatedModel
-                && ((AnimatedModel) obj).getAnimation() != null && (((AnimatedModel) obj).getAnimation()).isInitialized();
+                && ((AnimatedModel) obj).getAnimation() != null && (((AnimatedModel) obj).getAnimation()).isInitialized()
+                && ((AnimatedModel) obj).getJointTransforms() != null && ((AnimatedModel) obj).getAnimation() != null;
         boolean isUsingLights = usingLights && (obj.getNormalsBuffer() != null || obj.getNormalsBuffer() != null);
         boolean isTextured = usingTextures && obj.getTextureData() != null && obj.getTextureBuffer() != null;
         boolean isColoured = drawColors && obj != null && (obj.getColorsBuffer() != null || obj

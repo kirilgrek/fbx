@@ -1,11 +1,15 @@
 package org.andresoviedo.app.model3D.demo;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.opengl.GLES20;
 import android.util.Log;
 
 import org.andresoviedo.android_3d_model_engine.model.Object3DData;
+import org.andresoviedo.android_3d_model_engine.model.Texture;
 import org.andresoviedo.android_3d_model_engine.objects.Cube;
+import org.andresoviedo.android_3d_model_engine.objects.Plane;
 import org.andresoviedo.android_3d_model_engine.services.LoadListener;
 import org.andresoviedo.android_3d_model_engine.services.LoadListenerAdapter;
 import org.andresoviedo.android_3d_model_engine.services.LoaderTask;
@@ -14,12 +18,16 @@ import org.andresoviedo.android_3d_model_engine.services.collada.ColladaLoader;
 import org.andresoviedo.android_3d_model_engine.services.wavefront.WavefrontLoader;
 import org.andresoviedo.android_3d_model_engine.util.Exploder;
 import org.andresoviedo.android_3d_model_engine.util.Rescaler;
+import org.andresoviedo.util.android.AndroidUtils;
 import org.andresoviedo.util.android.ContentUtils;
+import org.andresoviedo.util.event.EventListener;
 import org.andresoviedo.util.io.IOUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.EventObject;
 import java.util.List;
 
 /**
@@ -28,7 +36,7 @@ import java.util.List;
  * @author andresoviedo
  *
  */
-public class DemoLoaderTask extends LoaderTask {
+public class DemoLoaderTask extends LoaderTask implements EventListener {
 
     /**
      * Build a new progress dialog for loading the data model asynchronously
@@ -52,6 +60,24 @@ public class DemoLoaderTask extends LoaderTask {
         final List<Exception> errors = new ArrayList<>();
 
         try {
+
+
+            Object3DData plano = Plane.buildPlane();
+            InputStream inputStream = ContentUtils.getInputStream("cube.bmp");
+            byte[] textureBytes = IOUtils.read(inputStream);
+            Bitmap bitmap = AndroidUtils.getBitmap(textureBytes);
+
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            byte[] byteArray = stream.toByteArray();
+
+            plano.getMaterial().setTexture(new Texture(byteArray));
+            plano.getMaterial().getTexture().setBitmap(bitmap);
+
+            super.onLoad(plano);
+
+
+            if (true) return null;
 
             // test cube made of arrays
             Object3DData obj10 = Cube.buildCubeV1();
@@ -245,5 +271,25 @@ public class DemoLoaderTask extends LoaderTask {
     @Override
     public void onProgress(String progress) {
         super.publishProgress(progress);
+    }
+
+    @Override
+    public boolean onEvent(EventObject event) {
+        if (event instanceof SceneLoader.OnDrawFrameEvent){
+            SceneLoader sceneLoader = (SceneLoader)event.getSource();
+            for (int i=0; i<sceneLoader.getObjects().size(); i++){
+                Object3DData obj = sceneLoader.getObjects().get(i);
+
+                Bitmap bitmap = obj.getMaterial().getTexture().getBitmap();
+                if (bitmap != null){
+                    int width = bitmap.getWidth();
+                    int height = bitmap.getHeight();
+                    bitmap.setPixel((int)(Math.random() * (float)width), (int)(Math.random() * (float)height), (int)(Math.random()*Color.WHITE));
+                    obj.getMaterial().getTexture().setChanged(true);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

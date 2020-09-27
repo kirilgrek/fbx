@@ -1,6 +1,8 @@
 package org.andresoviedo.android_3d_model_engine.drawer;
 
+import android.graphics.Bitmap;
 import android.opengl.GLES20;
+import android.opengl.GLUtils;
 import android.os.SystemClock;
 import android.util.Log;
 import android.util.SparseArray;
@@ -20,18 +22,17 @@ import java.util.Set;
 
 /**
  * Copyright 2013-2020 andresoviedo.org
- *
+ * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- *
+ * <p>
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- *
+ * <p>
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 class GLES20Renderer implements Renderer {
 
@@ -151,23 +152,29 @@ class GLES20Renderer implements Renderer {
         if (supportsColors()) {
             mColorHandle = setVBO("a_Color", obj.getColorsBuffer(), COLOR_COORDS_PER_VERTEX);
         } else {
-            setUniform4(obj.getColor() != null? obj.getColor() : DEFAULT_COLOR,"vColor");
+            setUniform4(obj.getColor() != null ? obj.getColor() : DEFAULT_COLOR, "vColor");
         }
 
         // pass in color mask - i.e. stereoscopic
-        setUniform4(colorMask != null ? colorMask : NO_COLOR_MASK,"vColorMask");
+        setUniform4(colorMask != null ? colorMask : NO_COLOR_MASK, "vColorMask");
 
         // pass in texture UV buffer
         int mTextureHandle = -1;
         if (textureId != -1 && supportsTextures()) {
-            setTexture(textureId);
+
+            if (obj.getMaterial().getTexture().hasChanged()) {
+                updateTexture(textureId, obj.getMaterial().getTexture().getBitmap());
+                obj.getMaterial().getTexture().setChanged(false);
+            } else {
+                setTexture(textureId);
+            }
             mTextureHandle = setVBO("a_TexCoordinate", obj.getTextureBuffer(), TEXTURE_COORDS_PER_VERTEX);
         }
 
         // pass in light position for lighting
         if (lightPosInWorldSpace != null && supportsLighting()) {
-            setUniform3(lightPosInWorldSpace,"u_LightPos");
-            setUniform3(cameraPos,"u_cameraPos");
+            setUniform3(lightPosInWorldSpace, "u_LightPos");
+            setUniform3(cameraPos, "u_cameraPos");
         }
 
         // pass in joint transformation for animated model
@@ -271,6 +278,27 @@ class GLES20Renderer implements Renderer {
         GLES20.glUniform1i(mTextureUniformHandle, 0);
         GLUtil.checkGlError("glUniform1i");
 
+    }
+
+    private void updateTexture(int textureId, Bitmap bitmap) {
+        int mTextureUniformHandle = GLES20.glGetUniformLocation(mProgram, "u_Texture");
+        GLUtil.checkGlError("glGetUniformLocation");
+
+        // Set the active texture unit to texture unit 0.
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLUtil.checkGlError("glActiveTexture");
+
+        // Bind to the texture in OpenGL
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
+        GLUtil.checkGlError("glBindTexture");
+
+        // update texture
+        GLUtils.texSubImage2D(GLES20.GL_TEXTURE_2D, 0, 0, 0, bitmap);
+        GLUtil.checkGlError("texSubImage2D");
+
+        // Tell the texture uniform sampler to use this texture in the shader by binding to texture unit 0.
+        GLES20.glUniform1i(mTextureUniformHandle, 0);
+        GLUtil.checkGlError("glUniform1i");
     }
 
     private boolean supportsJoints() {
@@ -392,7 +420,7 @@ class GLES20Renderer implements Renderer {
                 if (element.getMaterial() != null) {
                     if (!supportsColors()) {
                         setUniform4(element.getMaterial().getColor() != null ? element.getMaterial().getColor() :
-                                obj.getColor() != null? obj.getColor() : DEFAULT_COLOR, "vColor");
+                                obj.getColor() != null ? obj.getColor() : DEFAULT_COLOR, "vColor");
                     }
                     if (element.getMaterial().getTextureId() != -1 && supportsTextures()) {
                         setTexture(element.getMaterial().getTextureId());
